@@ -2,7 +2,7 @@
 
 ## Dataset
 
-Due to copyright requirements and privacy restrictions, we only provide the URLs of source web page of each EMR.
+Due to copyright requirements and privacy restrictions, we only provide the specific ID for each EMR data sample. You can use this ID to access the full EMR from the source website (https://bingli.iiyi.com/).
 
 ## Env
 
