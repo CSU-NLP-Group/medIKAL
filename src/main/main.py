@@ -177,12 +177,6 @@ if __name__ == "__main__":
                     label = EMR_dict["label"]
 
                     # 对病历内容进行预处理
-                    if current_medical_history != "无":
-                        current_medical_history = cmh_preprocess(current_medical_history)
-                    if past_disease_history != "无":
-                        past_disease_history = pdh_preprocess(past_disease_history)
-                    if body_check != "无":
-                        body_check = bc_preprocess(body_check)
                     if auxiliary_exam != "无":
                         auxiliary_exam = ae_preprocess(auxiliary_exam)
 

@@ -7,14 +7,14 @@ entity_list = [
     "其他",
     "其他治疗",
     "手术治疗",
-    "检查",
+    # "检查",
     "流行病学",
     "疾病",
     "症状",
     "社会学",
     "药物",
     "部位",
-    "预后",
+    # "预后",
 ]
 
 
@@ -69,55 +69,66 @@ class MyKnowledgeGraph:
 
         return neighbor_list   
 
-    def get_disease_sym(self, disease_name):
-        # 按照关系类型查询实体的邻居实体
+    # def get_disease_sym(self, disease_name):
+    #     # 按照关系类型查询实体的邻居实体
+    #     query = """
+    #     MATCH (e)-[r:`临床表现`]-(n)
+    #     WHERE e.name = $disease_name
+    #     RETURN collect(n.name) AS neighbor_entities
+    #     """
+    #     result = self.session.run(query, disease_name=disease_name)
+
+    #     neighbor_list = []
+    #     for record in result:
+    #         neighbors = record["neighbor_entities"]
+    #         neighbor_list.extend(neighbors)
+
+    #     return neighbor_list
+    
+    def find_shortest_path(self, start_entity_name, end_entity_name):
+    
         query = """
-        MATCH (e)-[r:`临床表现`]-(n)
-        WHERE e.name = $disease_name
-        RETURN collect(n.name) AS neighbor_entities
+        MATCH (start_entity), (end_entity)
+        WHERE start_entity.name = $start_entity_name AND end_entity.name = $end_entity_name
+        MATCH p = shortestPath((start_entity)-[*..10]-(end_entity))
+        RETURN p
         """
-        result = self.session.run(query, disease_name=disease_name)
-
-        neighbor_list = []
+        result = self.session.run(
+            query,
+            start_entity_name=start_entity_name,
+            end_entity_name=end_entity_name
+        )
+        # 用paths记录路径的字符串表示和对应的路径长度，方便后续排序并输出
+        paths = []
+        short_path = 0
         for record in result:
-            neighbors = record["neighbor_entities"]
-            neighbor_list.extend(neighbors)
+            path = record["p"]
+            path_len = len(path.relationships)
+            entities = []
+            relations = []
+            if path is not None:
+                for i in range(len(path.nodes)):
+                    node = path.nodes[i]
+                    entity_name = node["name"]
+                    entities.append(entity_name)
+                    if i < len(path.relationships):
+                        relationship = path.relationships[i]
+                        relation_type = relationship.type
+                        relations.append(relation_type)
+            path_str = ""
+            for i in range(len(entities)):
+                entities[i] = entities[i]
+                path_str += entities[i]
+                if i < len(relations):
+                    relations[i] = relations[i]
+                    path_str += "->" + relations[i] + "->"
+            paths.append((path_str, path_len))
 
-        return neighbor_list 
+        if len(paths) != 0:
+            # 按照长度排序
+            paths.sort(key=lambda x: x[1])
 
-    def get_disease_info(self, disease_name):
-        # 按照关系类型查询实体的邻居实体
-        gender_list = []
-        pop_list = []
-        age_list = []
-        bod_list = []
-
-        query1 = """
-        MATCH (e)-[r:`发病性别倾向`]-(n)
-        WHERE e.name = $disease_name
-        RETURN collect(n.name) AS neighbor_entities
-        """
-        result1 = self.session.run(query1, disease_name=disease_name)
-        for record in result1:
-            neighbors1 = record["neighbor_entities"]
-            gender_list.extend(neighbors1)
-
-        # query2 = """
-        # MATCH (e)-[r:`多发群体`]-(n)
-        # WHERE e.name = $disease_name
-        # RETURN collect(n.name) AS neighbor_entities
-        # """
-        # result2 = session.run(query2, disease_name=disease_name)
-        # for record in result2:
-        #     neighbors2 = record["neighbor_entities"]
-        #     pop_list.extend(neighbors2)
-
-        query3 = """
-        MATCH (e)-[r:`多发群体`]-(n)
-        WHERE e.name = $disease_name
-        RETURN collect(n.name) AS neighbor_entities
-        """
-        result3 = self.session.run(query3, disease_name=disease_name)
-        for record in result3:
-            neighbors3 = record["neighbor_entities"]
-            age_list.extend(neighbor
+            # 取最短的那条路径输出
+            return paths[0]
+        else:
+            return ("", 0)

@@ -1,8 +1,5 @@
 config_dict = {}
 
-# 把下面注释里的参数都放到config_dict里
-
-
 # 模型的版本，通过是否带有"api"来区别本地模型和api
 config_dict["model_version"] = "qwen-7b-chat"
 # 模型的路径(如果用的是modelscope则此参数不需要填，默认都存在.cache里)
@@ -49,7 +46,7 @@ config_dict["direct_topn"] = 2 # LLM直接进行预测的疾病个数
 config_dict["dis_topn"] = 2 * config_dict["direct_topn"] # rerank之前保留的候选疾病个数
 config_dict["rerank_topn"] = config_dict["direct_topn"] # rerank之后保留的候选疾病的个数
 config_dict["final_topn"] = config_dict["direct_topn"] # 最终保留的候选疾病的个数
-config_dict["path_topn"] = 3 # 路径长度阈值，超过此阈值则视为弱相关
+config_dict["path_topn"] = 3
 
 # 总的科室列表：["儿科", "耳鼻咽喉科", "妇产科", "护理科", "急诊科", "精神科", "康复科", "口腔科", "麻醉疼痛科", "内科", "皮肤性病科", "外科", "眼科", "肿瘤科"]
 
@@ -57,13 +54,13 @@ config_dict["path_topn"] = 3 # 路径长度阈值，超过此阈值则视为弱�
 config_dict["finished_list"] = []
 
 # 本次运行需要完成的任务列表
-config_dict["task_list"] = ["CMB-Clin"]
+config_dict["task_list"] = ["儿科", "耳鼻咽喉科", "妇产科", "护理科", "急诊科", "精神科", "康复科", "口腔科", "麻醉疼痛科", "内科", "皮肤性病科", "外科", "眼科", "肿瘤科"]
 # 上次运行终止的任务/科室/数据集
 config_dict["cur_dep"] = "None"
 # 上次运行终止的断点位置索引
 config_dict["cur_idx"] = -1
 # 本次运行终止的断点位置索引
-config_dict["stop_idx"] = 3200
+config_dict["stop_idx"] = 3500
 
-# 输出相关：通常来说，输出需要记录-1.用了哪个模型；2.检索器；3.候选疾病的数量；4.(TODO)ner模型的版本
-config_dict["result_log_pred_dir"] = f"/home/myjia/Medical_LLM_task/EMR_diagnos/data/multi-choice_QA/CMB/CMB-Clin/{config_dict['model_version']}_{config_dict['retriever_version']}_{config_dict['direct_topn']}/"
+# 输出相关：通常来说，输出需要记录-1.用了哪个模型；2.检索器；3.候选疾病的数量；
+config_dict["result_log_pred_dir"] = f"/home/myjia/Medical_LLM_task/EMR_diagnos/data/CMEMR/output/{config_dict['model_version']}_{config_dict['retriever_version']}_{config_dict['direct_topn']}/"

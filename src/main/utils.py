@@ -50,7 +50,7 @@ class KGTools:
                 return ""
         
     def get_past_dis(self, ner_result):
-        """ 获取病人既往病史中的疾病并加入候选疾病集合 """
+        
         past_dis = []
         exam_dis = [] # 辅助检查中出现的疾病
 
@@ -139,27 +139,27 @@ class KGTools:
 
         return ner_result, total_ner_dict, EMR2kg_entity_map
     
-    def rerank_by_sym(self, candidate_disease, EMR_sym_list):
-        """ 通过已有的症状列表，与候选疾病的症状做交集和并集，最终的分数为交集的个数/并集的个数 """
-        rerank_dict = {}
-        for disease in candidate_disease:
-            disease_sym_list = self.kg.get_disease_sym(disease)
-            intersection = list(set(EMR_sym_list) & set(disease_sym_list))
-            # union = list(set(EMR_sym_list) | set(disease_sym_list))
-            if len(EMR_sym_list) == 0:
-                rerank_dict[disease] = 1
-            else:
-                rerank_dict[disease] = len(intersection) / len(EMR_sym_list)
-            # 如果交集为空，则直接从候选疾病中删除
+    # def rerank_by_sym(self, candidate_disease, EMR_sym_list):
+    #     """ 通过已有的症状列表，与候选疾病的症状做交集和并集，最终的分数为交集的个数/并集的个数 """
+    #     rerank_dict = {}
+    #     for disease in candidate_disease:
+    #         disease_sym_list = self.kg.get_disease_sym(disease)
+    #         intersection = list(set(EMR_sym_list) & set(disease_sym_list))
+    #         # union = list(set(EMR_sym_list) | set(disease_sym_list))
+    #         if len(EMR_sym_list) == 0:
+    #             rerank_dict[disease] = 1
+    #         else:
+    #             rerank_dict[disease] = len(intersection) / len(EMR_sym_list)
+    #         # 如果交集为空，则直接从候选疾病中删除
 
-        result = rerank_dict.copy()
-        for disease in rerank_dict.keys():
-            if rerank_dict[disease] == 0:
-                result.pop(disease)
+    #     result = rerank_dict.copy()
+    #     for disease in rerank_dict.keys():
+    #         if rerank_dict[disease] == 0:
+    #             result.pop(disease)
 
-        result = dict(sorted(result.items(), key=lambda x: x[1], reverse=True))
+    #     result = dict(sorted(result.items(), key=lambda x: x[1], reverse=True))
 
-        return list(result.keys())[:self.rerank_topn]
+    #     return list(result.keys())[:self.rerank_topn]
     
     def rerank_by_path(self, candidate_disease, EMR_entity_dict, neighbor_dis_entity_map):
         """ 通过到目标实体的最短路径长度总和来对候选疾病进行排序"""
@@ -395,121 +395,6 @@ class KGTools:
         path_str += node_list[-1]
 
         return path_str
-
-def report_generation(personal_info, chief_complaint, exam_result, formatted_KG_knowledge, diagnos_via_KG_result, final_result):
-    report = ""
-    row_len_cnt = 0 # 统计最长的行的长度，用于格式化输出
-    row1 = "| 患者基本信息：\n"
-    row2 = "| 年龄：{}\t\t性别：{}\n".format(personal_info["年龄"], personal_info["性别"])
-    row3 = "| 患者病情描述：\n"
-    row4 = "| 主诉：{}".format(chief_complaint)
-    row5 = "| 检查结果：{}".format(exam_result)
-    row6 = "| 相关知识：\n{}\n".format(formatted_KG_knowledge)
-    row7 = "| 诊断结果：\n"
-    match1 = re.search(r"诊断结果：(.*?)\n", final_result)
-    row8 = "| " + match1.group(1) if match1 else "[]"
-    match2 = re.search(r"诊断依据：(.*?)\n", final_result)
-    row9 = "| 诊断依据：\n"
-    row10 = "| " + match2.group(1) if match2 else "[]"
-    row11 = "| 推理过程：\n"
-    row12 = "| " + diagnos_via_KG_result
-
-    # match1 = re.search(r'发病性别倾向：(.*?)\n', response)
-    # dis_info_dict["发病性别倾向"] = match1.group(1) if match1 else "[]"
-
-    
-    return report
-
-# def __init__(self):
-def cmh_preprocess(current_medical_history):
-    """ 对现病史进行预处理 """
-    current_medical_history = [t for t in current_medical_history.split("。") if t != "" and t != " "]
-    current_medical_history = [t for tt in current_medical_history for t in tt.split("，") if t != "" and t != " "]
-    neg_text = []
-    pos_text = []
-    
-    negative_sym_flag = [
-        "不详", "未", "良好", "正常", "阴性", "无", "神志清", "稳定", "腹软", "清晰", "居中", "双肺呼吸音清", "腹部平坦", "眼球活动自如","言语流利",
-        "瞳孔等大同圆","状态尚可", "排除",
-    ]
-    except_flag = ["无法", "无力", "无明显好转"]
-    
-    # 如果文本片段中出现negative_sym_flag中的词，那么这个文本片段会被加入到neg_text中，否则加入到pos_text中；但是要考虑except_flag中的词
-    for t in current_medical_history:
-        if any([neg in t for neg in negative_sym_flag]):
-            if not any([ex in t for ex in except_flag]):
-                neg_text.append(t)
-            else:
-                pos_text.append(t)
-        else:
-            pos_text.append(t)
-    
-    current_medical_history = "，".join(pos_text)
-    return current_medical_history
-def pdh_preprocess(past_disease_history):
-    """ 对既往史进行预处理 """
-    if isinstance(past_disease_history, str):
-        past_disease_history = [t for t in past_disease_history.split("。") if t != "" and t != " "]
-        # 进一步再按逗号继续分隔
-        past_disease_history = [t for tt in past_disease_history for t in tt.split("，") if t != "" and t != " "]
-        # 设计正则表达式，在既往史中，寻找"无......史"、"否认......史"、"......不详"这些内容，如果某一句话包含，那么这句话就不进行实体抽取
-        past_disease_history = [t for t in past_disease_history if not (re.search("无.*?史", t) or re.search("否认.*?史", t) or re.search(".*?不详", t))]
-        # 处理完成之后，重新合并成一个字符串
-        past_disease_history = "，".join(past_disease_history)
-    else:
-        past_disease_history = "None"
-    return past_disease_history   
-
-def bc_preprocess(body_check):
-    """ 对查体进行预处理 """
-    spec_list = ["专科检查", "专科体查", "专科情况", "专科查体"]
-    for spec in spec_list:
-        if spec in body_check:
-            body_check = body_check.split(spec)[1]
-            break
-    body_check = [t for t in body_check.split("。") if t != "" and t != " "]
-    body_check = [t for tt in body_check for t in tt.split("，") if t != "" and t != " "]
-    neg_text = []
-    pos_text = []
-    
-    negative_sym_flag = [
-        "不详", "未", "良好", "正常", "阴性", "无", "神志清", "稳定", 
-        "腹软", "腹部软", "腹部平软", "清晰", "居中", "双肺呼吸音清", "腹部平坦", 
-        "眼球活动自如","言语流利", "瞳孔等大同圆","口齿清楚", "瞳孔等大等圆", "呼吸动度对称", "精神状态尚可","生理反射存在", "感觉对称", "精神可", "查体合作", "胸廓对称",  "呼吸动度均等", "肺清",
-        "心律齐", "一般情况尚可", "瞳孔对称", "呼吸音清", "律齐", "神清", "眼裂对称", "精神状态佳","正圆等大", "等大正圆", "对光反射灵敏", "腹部柔软", "甲状腺不大", "发育正常", "营养良好",  "营养中等", 
-        "神志清晰","神志清楚","神志清","神志淡漠","神清","神志清醒",
-        "自主体位","体位自主","被动体位","体位被动","强迫体位","体位强迫","检查合作","步入病房","对答切题","检体合作", 
-        "无特殊面容","慢性面容","面容忧虑","表情忧虑","表情痛苦","痛苦面容","面容痛苦", "语言流利","言语流利",
-        "皮肤、黏膜无黄染","无瘀点、瘀斑","无肝脏、蜘蛛痣", "色泽正常","无皮疹","无皮下出血","毛发分布正常","温度与湿度正常","无水肿","无肝脏","无蜘蛛痣","无皮下结节","无瘀点","无瘀斑","无出血点", "全身浅表淋巴结未及肿大","浅表淋巴结无肿大","淋巴结未触及肿大",
-        "头颅无畸形","头颅大小正常",'无畸形',"无压痛","无包块",
-        "眼睑正常","结膜正常","眼球正常","巩膜无黄染","角膜正常","两瞳孔等大等圆","直径3mm","对光反射正常", "双瞳孔正大等圆","对光反射灵敏","双侧瞳孔等圆等大","两瞳孔等大等圆",
-        "耳廓正常","外耳道无分泌物","乳突无压痛","听力粗试无障碍","耳廓无畸形","外耳道无分泌物","乳突无压痛","听力粗试无障碍",
-        "鼻外形正常","鼻窦无压痛","鼻外形正常","无其他异常","无鼻窦压痛",
-        "口唇红润","黏膜正常","腮腺导管正常","伸舌居中","齿龈正常","齿列齐","口腔内黏膜正常","口唇无紫绀",
-        "扁桃体无肿大", "咽部无充血", "声音正常", "扁桃体无红肿", "扁桃体不肿大", "无脓性分泌物",
-        "胸廓正常", "胸骨无压痛", "双侧乳房正常对称", "无包块", "无压痛", "胸廓对称无畸形", "胸部对称", "胸廓左右对称",
-        "颈两侧对称", "未见颈静脉充盈", "颈动脉无异常搏动", "颈软无抵抗", "气管居中", "甲状腺无肿大", "颈软无抵抗", "颈软无压痛", "双甲状腺无肿大", "气管居中", "颈静脉无怒张",
-        "肺视诊：呼吸运动正常", "肋间隙正常", "触诊：正常", "无胸前摩擦感", "无皮下捻发感", "叩诊：正常清音", "肺下界 肩胛线：右10肋间", "左10肋间", "移动度：", "听诊：呼吸规整", "呼吸音正常", "无啰音", "语音传导正常", "无胸摩擦音",
-        "心视诊：无心前区隆起", "心尖搏动正常", "心尖搏动位置正常", "触诊：心尖搏动正常", "无震颤", "无心包摩擦感", "叩诊：相对浊音界正常", "听诊：心率72次/分", "心律齐", "心音S1正常", "S2正常", "S3无", "S4无", "无额外心音", "无其他杂音", "周围血管：无异常血管征",
-        "腹部视诊：外形正常", "腹式呼吸存在", "脐正常", "触诊：柔软", "无部位压痛", "无反跳痛", "无振水声", "无腹部包块", "未触及肝", "未触及胆囊", "无压痛", "Murphy征：阴性", "未触及脾", "未触及肾", "无输尿管压痛点", "叩诊：肝浊音界存在", "无移动性浊音", "听诊：肠鸣者正常", "无气过水声", "无血管杂音",
-        "脊柱四肢：脊柱正常", "棘突活动度正常",
-        "神经系统 腹壁反射减弱", "肌张力正常", "无肢体瘫痪", "肱二头肌反射：左右正常", "膝腱反射：左右正常", "跟腱反射：左右正常", "Hoffmann征：阴性", "Babinski征：阴性", "Kernig征：阴性",
-    ]
-    # 神经系统 腹壁反射减弱,肌张力正常,无肢体瘫痪,肱二头肌反射：左右正常。膝腱反射：左右正常。跟腱反射：左右正常。Hoffmann征：阴性,Babinski征：阴性,Kernig征：阴性。
-    except_flag = ["无法", "无力", "无明显好转", "无缓解", "无好转"]
-    
-    # 如果文本片段中出现negative_sym_flag中的词，那么这个文本片段会被加入到neg_text中，否则加入到pos_text中；但是要考虑except_flag中的词
-    for t in body_check:
-        if any([neg in t for neg in negative_sym_flag]):
-            if not any([ex in t for ex in except_flag]):
-                neg_text.append(t)
-            else:
-                pos_text.append(t)
-        else:
-            pos_text.append(t)
-    
-    body_check = "，".join(pos_text)
-    return body_check
 
 def ae_preprocess(auxiliary_examination):
     """ 对辅助检查进行预处理 """
