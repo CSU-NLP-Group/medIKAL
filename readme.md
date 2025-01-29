@@ -18,3 +18,6 @@ pip install -r requirements.txt
 cd src/main
 python main.py
 ```
+
+## Updates
+Stay tuned for updates on data and code!
