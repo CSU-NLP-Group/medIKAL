@@ -2,7 +2,9 @@
 
 ## Dataset
 
-Due to copyright requirements and privacy restrictions, we only provide the URL-id of the source web page of each EMR. You can easily access each medical record's URL by concatenating the URL-id with the [base URL of the source website](https://bingli.iiyi.com/).
+Due to copyright requirements and privacy restrictions, we only provide the URL-id of the source web page for each EMR. You can access each medical record by concatenating the URL-id with the [base URL of the source website](https://bingli.iiyi.com/).  
+Please construct the full URL using the following format: `https://bingli.iiyi.com/show/{emrid}-1.html`.  
+For example: [https://bingli.iiyi.com/show/65684-1.html](https://bingli.iiyi.com/show/65684-1.html)
 
 ## Env
 
