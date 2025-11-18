@@ -14,6 +14,8 @@ Please make sure you have correctly installed Neo4j before running.
 pip install -r requirements.txt
 ```
 
+We use the `retriv` library to build our retriever. Please follow the instructions at [https://github.com/AmenRa/retriv](https://github.com/AmenRa/retriv) to set up the retriever.
+
 ## Run
 
 ```sh
